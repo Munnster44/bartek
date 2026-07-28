@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bartek Project App v2.3</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f6feb">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --bg:#f4f7fb; --panel:#ffffff; --ink:#172033; --muted:#667085; --line:#d8dee9;
+    --accent:#1f6feb; --accent2:#e7f0ff; --danger:#b42318; --ok:#087443;
+    --shadow:0 10px 30px rgba(16,24,40,.10); --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{position:sticky;top:0;z-index:5;background:linear-gradient(135deg,#0b3b75,#1f6feb);color:white;padding:14px 16px;box-shadow:var(--shadow)}
+  header h1{margin:0;font-size:1.25rem;letter-spacing:.2px}
+  header .sub{opacity:.9;font-size:.86rem;margin-top:2px}
+  .wrap{max-width:1050px;margin:0 auto;padding:14px;display:grid;grid-template-columns:310px 1fr;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .card h2{font-size:1rem;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);background:#fbfcfe}
+  .section{padding:12px 14px}
+  .row{display:flex;gap:8px;align-items:center}
+  input,button,select{font:inherit}
+  input[type=text]{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:white;color:var(--ink)}
+  button{border:0;border-radius:12px;padding:11px 13px;background:var(--accent);color:white;font-weight:700;cursor:pointer;min-height:42px}
+  button.secondary{background:#eef2f7;color:#1d2939;border:1px solid var(--line)}
+  button.danger{background:var(--danger)}
+  button.ok{background:var(--ok)}
+  button.small{padding:8px 10px;min-height:34px;font-size:.9rem}
+  button:active{transform:translateY(1px)}
+  .list-buttons{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .project-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}
+    .project-row .list-btn{width:100%}
+    .project-delete-btn{white-space:nowrap}
+  .list-btn{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:#f8fafc;color:#172033;border:1px solid var(--line);font-weight:700}
+  .list-btn.active{background:var(--accent2);border-color:#99c2ff;color:#063b78}
+  .badge{font-size:.75rem;color:#475467;background:white;border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:#fbfcfe;padding:10px 14px}
+  .title-block{min-width:180px}
+  .title-block h2{border:0;background:transparent;padding:0;margin:0;font-size:1.08rem}
+  .counts{font-size:.85rem;color:var(--muted);margin-top:2px}
+  .item-form{padding:12px 14px;border-bottom:1px solid var(--line)}
+  ul{list-style:none;margin:0;padding:0}
+  li.item{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:11px 14px;border-bottom:1px solid #edf1f7}
+  li.item:last-child{border-bottom:0}
+  .check{width:28px;height:28px;accent-color:var(--ok)}
+  .item-text{font-size:1rem;word-break:break-word}
+  .item.done .item-text{text-decoration:line-through;color:#98a2b3}
+  .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .empty{padding:32px 18px;text-align:center;color:var(--muted)}
+  .footer-actions{padding:12px 14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+  .note{font-size:.82rem;color:var(--muted);line-height:1.35;margin-top:10px}
+  .file{display:none}
+  .search-card{grid-column:1 / -1}
+  .search-tools{border-bottom:1px solid var(--line)}
+  .json-results{max-height:430px;overflow-y:auto;padding:0}
+  .json-file-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 14px;border-bottom:1px solid #edf1f7}
+  .json-file-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .json-file-row:last-child{border-bottom:0}
+  .json-file-name{font-weight:700;word-break:break-word}
+  .json-file-meta{font-size:.8rem;color:var(--muted);margin-top:3px}
+  .pager{align-items:center;justify-content:center}
+  .app-footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px 14px 18px}
+  .exit-modal{position:fixed;inset:0;z-index:1000;background:rgba(15,23,42,.62);display:flex;align-items:center;justify-content:center;padding:18px}
+  .exit-modal[hidden]{display:none}
+  .exit-dialog{width:min(520px,100%);background:var(--panel);border-radius:18px;box-shadow:0 22px 70px rgba(0,0,0,.35);overflow:hidden;border:1px solid var(--line)}
+  .exit-dialog h2{margin:0;padding:16px 18px;border-bottom:1px solid var(--line);font-size:1.15rem}
+  .exit-dialog .exit-body{padding:16px 18px;line-height:1.45}
+  .exit-dialog .exit-actions{display:flex;gap:9px;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line);background:#fbfcfe}
+  .exit-dialog .exit-actions button{flex:1 1 140px}
+  @media print{
+    header,.wrap aside,.item-form,.toolbar button,.footer-actions,.item-actions{display:none!important}
+    body{background:white;color:#000}
+    .wrap{display:block;max-width:none;padding:0}
+    .card{box-shadow:none;border:0}
+    .toolbar{display:block!important;border:0;background:white;padding:0 0 12px 0}
+    li.item{grid-template-columns:32px 1fr;border-bottom:1px solid #ddd;padding:8px 0}
+    .check{width:20px;height:20px}
+    .item.done .item-text{text-decoration:line-through;color:#555}
+  }
+  @media(max-width:760px){
+    .wrap{grid-template-columns:1fr;padding:10px;gap:10px}
+    header h1{font-size:1.12rem}
+    .toolbar{align-items:flex-start}
+    li.item{grid-template-columns:38px 1fr;}
+    .item-actions{grid-column:2;justify-content:flex-start}
+    button{width:auto}
+    .row.stack{flex-direction:column;align-items:stretch}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bartek Project App v2.3</h1>
+  <div class="sub">Create projects, save Bartek JSON files, and reopen saved projects</div>
+</header>
+<main class="wrap">
+  <aside class="card">
+    <h2>Projects</h2>
+    <div class="section">
+      <div class="row stack">
+        <input id="newListName" type="text" placeholder="New project name, e.g. Deck Renovation">
+        <button id="addListBtn">Add Project</button>
+      </div>
+      <div id="listButtons" class="list-buttons"></div>
+      <div class="note">Your projects are saved automatically on this device/browser.</div>
+    </div>
+    <div class="footer-actions">
+      <button id="exportBtn" class="secondary small">Save All JSON</button>
+      <button id="saveCurrentBtn" class="secondary small">Save Current JSON</button>
+      <button id="importBtn" class="secondary small">Load JSON</button>
+      <button id="searchJsonBtn" class="secondary small">Find Bartek JSON Files</button>
+      <input id="importFile" class="file" type="file" accept="application/json,.json">
+      <input id="searchFilesFallback" class="file" type="file" accept="application/json,.json" multiple>
+      <button id="clearAllBtn" class="danger small">Clear All</button>
+      <button id="closeAppBtn" class="danger small">Close App</button>
+    </div>
+  </aside>
+
+  <section class="card">
+    <div class="toolbar">
+      <div class="title-block">
+        <h2 id="currentTitle">No Project Selected</h2>
+        <div id="currentCounts" class="counts"></div>
+      </div>
+      <div class="row">
+        <button id="renameListBtn" class="secondary small">Rename</button>
+        <button id="deleteListBtn" class="danger small">Delete Project</button>
+      </div>
+    </div>
+    <div class="item-form">
+      <div class="row stack">
+        <input id="newItemText" type="text" placeholder="Add project item, e.g. Order materials">
+        <button id="addItemBtn" class="ok">Add Item</button>
+      </div>
+    </div>
+    <ul id="items"></ul>
+    <div class="footer-actions">
+      <button id="untickAllBtn" class="secondary small">Untick All</button>
+      <button id="deleteTickedBtn" class="danger small">Delete Ticked</button>
+      <button id="sortBtn" class="secondary small">Sort A-Z</button>
+      <button id="printBtn" class="ok small">Print Project</button>
+    </div>
+  </section>
+
+  <section id="jsonSearchCard" class="card search-card" hidden>
+    <div class="toolbar">
+      <div class="title-block">
+        <h2>Bartek JSON File Search</h2>
+        <div id="searchSummary" class="counts">Choose a folder or select JSON files.</div>
+      </div>
+      <div class="row">
+        <button id="chooseFolderBtn" class="secondary small">Choose Folder</button>
+        <button id="chooseFilesBtn" class="secondary small">Choose Files</button>
+        <button id="closeSearchBtn" class="danger small">Close</button>
+      </div>
+    </div>
+    <div class="section search-tools">
+      <input id="jsonSearchText" type="text" placeholder="Filter by file name">
+    </div>
+    <div id="jsonResults" class="json-results"></div>
+    <div class="footer-actions pager">
+      <button id="prevPageBtn" class="secondary small">Previous 10</button>
+      <span id="pageInfo" class="counts">Page 0 of 0</span>
+      <button id="nextPageBtn" class="secondary small">Next 10</button>
+    </div>
+  </section>
+</main>
+<div id="exitModal" class="exit-modal" hidden role="dialog" aria-modal="true" aria-labelledby="exitTitle">
+  <div class="exit-dialog">
+    <h2 id="exitTitle">Close Bartek Project App?</h2>
+    <div class="exit-body">
+      <strong>Your projects are already saved on this device.</strong><br>
+      Would you also like to save a dated JSON backup before closing?
+    </div>
+    <div class="exit-actions">
+      <button id="saveAndCloseBtn" class="ok">Save JSON &amp; Close</button>
+      <button id="closeWithoutSaveBtn" class="danger">Close Without JSON</button>
+      <button id="stayInAppBtn" class="secondary">Stay in App</button>
+    </div>
+  </div>
+</div>
+<footer class="app-footer">© 2026 Aaron Carruthers • Bartek Project App v2.3</footer>
+<script>
+(function(){
+  const STORAGE_KEY = 'bartekProjectApp_v2';
+  const $ = id => document.getElementById(id);
+  let state = loadState();
+
+  function uid(){ return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8); }
+  function defaultState(){
+    const id = uid();
+    return { activeListId:id, lists:[{ id, name:'Projects', items:[
+      {id:uid(), text:'Plan project', done:false}, {id:uid(), text:'Gather materials', done:false}, {id:uid(), text:'Review progress', done:true}
+    ]}]};
+  }
+  function loadState(){
+    try{ const raw=localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : defaultState(); }
+    catch(e){ return defaultState(); }
+  }
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function activeList(){ return state.lists.find(l=>l.id===state.activeListId) || state.lists[0] || null; }
+  function escapeHtml(s){ return String(s).replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+
+  function render(){
+    if(!state.lists.length){
+      state.activeListId=null;
+    } else if(!activeList()) state.activeListId=state.lists[0].id;
+    renderLists(); renderItems(); save();
+  }
+  function renderLists(){
+    const box=$('listButtons'); box.innerHTML='';
+    state.lists.forEach(list=>{
+      const total=list.items.length, done=list.items.filter(i=>i.done).length;
+      const row=document.createElement('div');
+      row.className='project-row';
+      const btn=document.createElement('button');
+      btn.className='list-btn' + (list.id===state.activeListId?' active':'');
+      btn.innerHTML=`<span>${escapeHtml(list.name)}</span><span class="badge">${done}/${total}</span>`;
+      btn.onclick=()=>{state.activeListId=list.id; render();};
+      const del=document.createElement('button');
+      del.className='danger small project-delete-btn';
+      del.textContent='Delete';
+      del.title=`Delete project ${list.name}`;
+      del.onclick=(event)=>{
+        event.stopPropagation();
+        if(!confirm(`Delete the project "${list.name}"? This cannot be undone.`)) return;
+        state.lists=state.lists.filter(l=>l.id!==list.id);
+        if(state.activeListId===list.id) state.activeListId=state.lists[0]?.id||null;
+        render();
+      };
+      row.append(btn,del);
+      box.appendChild(row);
+    });
+  }
+  function renderItems(){
+    const list=activeList();
+    const title=$('currentTitle'), counts=$('currentCounts'), ul=$('items');
+    ul.innerHTML='';
+    const hasList=!!list;
+    $('newItemText').disabled=!hasList; $('addItemBtn').disabled=!hasList;
+    $('renameListBtn').disabled=!hasList; $('deleteListBtn').disabled=!hasList;
+    $('untickAllBtn').disabled=!hasList; $('deleteTickedBtn').disabled=!hasList; $('sortBtn').disabled=!hasList;
+    if(!list){
+      title.textContent='No Project Selected'; counts.textContent='Create a project to begin.';
+      ul.innerHTML='<div class="empty">No project selected yet.</div>'; return;
+    }
+    title.textContent=list.name;
+    const total=list.items.length, done=list.items.filter(i=>i.done).length;
+    counts.textContent=`${total} item${total!==1?'s':''} • ${done} ticked • ${total-done} remaining`;
+    if(!list.items.length){ ul.innerHTML='<div class="empty">No items in this project. Add one above.</div>'; return; }
+    list.items.forEach(item=>{
+      const li=document.createElement('li'); li.className='item'+(item.done?' done':'');
+      li.innerHTML=`
+        <input class="check" type="checkbox" ${item.done?'checked':''} aria-label="Toggle item">
+        <div class="item-text">${escapeHtml(item.text)}</div>
+        <div class="item-actions">
+          <button class="secondary small edit">Edit</button>
+          <button class="danger small del">Delete</button>
+        </div>`;
+      li.querySelector('.check').onchange=e=>{item.done=e.target.checked; render();};
+      li.querySelector('.edit').onclick=()=>{
+        const v=prompt('Edit item:', item.text);
+        if(v!==null && v.trim()){ item.text=v.trim(); render(); }
+      };
+      li.querySelector('.del').onclick=()=>{ list.items=list.items.filter(i=>i.id!==item.id); render(); };
+      ul.appendChild(li);
+    });
+  }
+
+  $('addListBtn').onclick=()=>{
+    const name=$('newListName').value.trim(); if(!name) return;
+    const id=uid(); state.lists.push({id,name,items:[]}); state.activeListId=id; $('newListName').value=''; render();
+  };
+  $('newListName').addEventListener('keydown', e=>{ if(e.key==='Enter') $('addListBtn').click(); });
+  $('addItemBtn').onclick=()=>{
+    const list=activeList(); const text=$('newItemText').value.trim(); if(!list||!text) return;
+    list.items.push({id:uid(), text, done:false}); $('newItemText').value=''; $('newItemText').focus(); render();
+  };
+  $('newItemText').addEventListener('keydown', e=>{ if(e.key==='Enter') $('addItemBtn').click(); });
+  $('renameListBtn').onclick=()=>{
+    const list=activeList(); if(!list) return; const v=prompt('Rename project:', list.name);
+    if(v!==null && v.trim()){ list.name=v.trim(); render(); }
+  };
+  $('deleteListBtn').onclick=()=>{
+    const list=activeList(); if(!list) return;
+    if(confirm(`Delete the project "${list.name}"?`)){
+      state.lists=state.lists.filter(l=>l.id!==list.id); state.activeListId=state.lists[0]?.id||null; render();
+    }
+  };
+  $('untickAllBtn').onclick=()=>{ const list=activeList(); if(!list) return; list.items.forEach(i=>i.done=false); render(); };
+  $('deleteTickedBtn').onclick=()=>{ const list=activeList(); if(!list) return; list.items=list.items.filter(i=>!i.done); render(); };
+  $('sortBtn').onclick=()=>{ const list=activeList(); if(!list) return; list.items.sort((a,b)=>a.text.localeCompare(b.text)); render(); };
+
+  function safeName(name){ return (name || 'Bartek-Project').replace(/[<>:\"/\\|?*\x00-\x1F]+/g,'-').replace(/\s+/g,'-').replace(/-+/g,'-').replace(/^-+|-+$/g,'') || 'Bartek-Project'; }
+  function timestampForFile(date=new Date()){
+    const pad=n=>String(n).padStart(2,'0');
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+  }
+  function requestedJsonName(defaultBase){
+    const entered=prompt('JSON file name:', defaultBase);
+    if(entered===null) return null;
+    let name=safeName(entered.trim() || defaultBase);
+    if(!name.toLowerCase().endsWith('.json')) name += '.json';
+    return name;
+  }
+  function downloadText(filename, text, type='text/plain'){
+    const blob=new Blob([text],{type});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }
+  function currentListJson(){
+    const list=activeList();
+    return { app:'Bartek Project App', version:'2.3', savedAt:new Date().toISOString(), activeListId:list?.id||null, lists:list?[list]:[] };
+  }
+
+  function saveAllJsonBackup(){
+    const defaultBase=`Bartek-${timestampForFile()}`;
+    const filename=requestedJsonName(defaultBase);
+    if(!filename) return false;
+    const payload={...state, app:'Bartek Project App', version:'2.3', savedAt:new Date().toISOString()};
+    downloadText(filename, JSON.stringify(payload,null,2), 'application/json');
+    return true;
+  }
+
+  let exitPromptOpen=false;
+  let allowAppExit=false;
+  function showExitPrompt(){
+    if(exitPromptOpen) return;
+    exitPromptOpen=true;
+    $('exitModal').hidden=false;
+    setTimeout(()=>$('saveAndCloseBtn').focus(),0);
+  }
+  function hideExitPrompt(){
+    exitPromptOpen=false;
+    $('exitModal').hidden=true;
+  }
+  function leaveApp(){
+    allowAppExit=true;
+    hideExitPrompt();
+    window.removeEventListener('popstate', handleBackButton);
+    // Return to the previous Android/browser screen. In an installed PWA this normally closes the app window.
+    history.back();
+    setTimeout(()=>{ try{ window.close(); }catch(e){} },250);
+  }
+  function handleBackButton(){
+    if(allowAppExit) return;
+    history.pushState({bartekGuard:true},'',location.href);
+    showExitPrompt();
+  }
+  history.replaceState({bartekBase:true},'',location.href);
+  history.pushState({bartekGuard:true},'',location.href);
+  window.addEventListener('popstate', handleBackButton);
+
+  $('closeAppBtn').onclick=showExitPrompt;
+  $('stayInAppBtn').onclick=hideExitPrompt;
+  $('closeWithoutSaveBtn').onclick=leaveApp;
+  $('saveAndCloseBtn').onclick=()=>{
+    if(saveAllJsonBackup()) setTimeout(leaveApp,300);
+  };
+  $('exitModal').addEventListener('click',e=>{ if(e.target===$('exitModal')) hideExitPrompt(); });
+
+  $('clearAllBtn').onclick=()=>{
+    if(confirm('Clear all projects from this browser?')){ state=defaultState(); render(); }
+  };
+  $('exportBtn').onclick=()=>{ saveAllJsonBackup(); };
+  $('saveCurrentBtn').onclick=()=>{
+    const list=activeList(); if(!list) return alert('Create or select a project first.');
+    const defaultBase=`Bartek-${timestampForFile()}-${safeName(list.name)}`;
+    const filename=requestedJsonName(defaultBase);
+    if(!filename) return;
+    downloadText(filename, JSON.stringify(currentListJson(),null,2), 'application/json');
+  };
+  $('printBtn').onclick=()=>{
+    if(!activeList()) return alert('Create or select a project first.');
+    window.print();
+  };
+  $('importBtn').onclick=()=> $('importFile').click();
+  $('importFile').onchange=e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const incoming=JSON.parse(r.result);
+        if(!incoming || !Array.isArray(incoming.lists)) throw new Error('Invalid file');
+        state=incoming; render(); alert('Projects loaded.');
+      }catch(err){ alert('Could not load this JSON file.'); }
+    };
+    r.readAsText(file); e.target.value='';
+  };
+  let discoveredJsonFiles=[];
+  let filteredJsonFiles=[];
+  let jsonPage=1;
+  const JSON_PAGE_SIZE=10;
+
+  function formatBytes(bytes){
+    if(!Number.isFinite(bytes)) return '';
+    if(bytes<1024) return `${bytes} B`;
+    if(bytes<1048576) return `${(bytes/1024).toFixed(1)} KB`;
+    return `${(bytes/1048576).toFixed(1)} MB`;
+  }
+  function isBartekJson(name){ return /^barte(?:k|ck).*\.json$/i.test(name || ''); }
+  function applyJsonFilter(){
+    const q=$('jsonSearchText').value.trim().toLowerCase();
+    filteredJsonFiles=discoveredJsonFiles.filter(entry=>!q || entry.name.toLowerCase().includes(q));
+    jsonPage=Math.min(Math.max(1,jsonPage),Math.max(1,Math.ceil(filteredJsonFiles.length/JSON_PAGE_SIZE)));
+    renderJsonResults();
+  }
+  function renderJsonResults(){
+    const box=$('jsonResults'); box.innerHTML='';
+    const pages=Math.ceil(filteredJsonFiles.length/JSON_PAGE_SIZE);
+    if(!filteredJsonFiles.length){
+      box.innerHTML='<div class="empty">No JSON files beginning with Bartek or Barteck were found.</div>';
+      $('pageInfo').textContent='Page 0 of 0';
+      $('prevPageBtn').disabled=true; $('nextPageBtn').disabled=true;
+    } else {
+      const start=(jsonPage-1)*JSON_PAGE_SIZE;
+      filteredJsonFiles.slice(start,start+JSON_PAGE_SIZE).forEach(entry=>{
+        const row=document.createElement('div'); row.className='json-file-row';
+        const modified=entry.lastModified ? new Date(entry.lastModified).toLocaleString() : 'Date unavailable';
+        row.innerHTML=`<div><div class="json-file-name">${escapeHtml(entry.name)}</div><div class="json-file-meta">${escapeHtml(modified)}${entry.size!=null?' • '+formatBytes(entry.size):''}</div></div><div class="json-file-actions"><button class="ok small load-json-btn">Load</button><button class="danger small delete-json-btn">Delete</button></div>`;
+        row.querySelector('.load-json-btn').onclick=()=>loadDiscoveredJson(entry);
+        const deleteBtn=row.querySelector('.delete-json-btn');
+        if(!entry.parentHandle || !entry.localName){
+          deleteBtn.disabled=true;
+          deleteBtn.title='Files chosen with Choose Files cannot be deleted by the browser. Use Choose Folder instead.';
+        } else {
+          deleteBtn.onclick=()=>deleteDiscoveredJson(entry);
+        }
+        box.appendChild(row);
+      });
+      $('pageInfo').textContent=`Page ${jsonPage} of ${pages} • ${filteredJsonFiles.length} file${filteredJsonFiles.length===1?'':'s'}`;
+      $('prevPageBtn').disabled=jsonPage<=1; $('nextPageBtn').disabled=jsonPage>=pages;
+    }
+    $('searchSummary').textContent=`Showing Bartek JSON files, 10 items per page.`;
+  }
+  async function loadDiscoveredJson(entry){
+    try{
+      const file=entry.file || await entry.handle.getFile();
+      const incoming=JSON.parse(await file.text());
+      if(!incoming || !Array.isArray(incoming.lists)) throw new Error('Invalid file');
+      state=incoming; render(); alert(`Loaded ${entry.name}`);
+    }catch(err){ alert('Could not load this JSON file.'); }
+  }
+  async function deleteDiscoveredJson(entry){
+    if(!entry.parentHandle || !entry.localName) return alert('This file cannot be deleted from the fallback file picker. Choose its folder instead.');
+    if(!confirm(`Delete "${entry.name}"? This cannot be undone.`)) return;
+    try{
+      const permission=await entry.parentHandle.queryPermission({mode:'readwrite'});
+      if(permission!=='granted'){
+        const requested=await entry.parentHandle.requestPermission({mode:'readwrite'});
+        if(requested!=='granted') throw new Error('Write permission was not granted.');
+      }
+      await entry.parentHandle.removeEntry(entry.localName);
+      discoveredJsonFiles=discoveredJsonFiles.filter(item=>item!==entry);
+      applyJsonFilter();
+    }catch(err){
+      alert('Could not delete this JSON file. Rechoose the folder and allow editing permission.');
+    }
+  }
+  async function scanDirectory(handle,path=''){
+    const found=[];
+    for await (const [name,item] of handle.entries()){
+      if(item.kind==='file' && isBartekJson(name)){
+        try{ const file=await item.getFile(); found.push({name:path+name,localName:name,parentHandle:handle,handle:item,size:file.size,lastModified:file.lastModified}); }catch(e){}
+      } else if(item.kind==='directory'){
+        try{ found.push(...await scanDirectory(item,path+name+'/')); }catch(e){}
+      }
+    }
+    return found;
+  }
+  $('searchJsonBtn').onclick=()=>{ $('jsonSearchCard').hidden=false; $('jsonSearchCard').scrollIntoView({behavior:'smooth',block:'start'}); renderJsonResults(); };
+  $('closeSearchBtn').onclick=()=>{ $('jsonSearchCard').hidden=true; };
+  $('chooseFolderBtn').onclick=async()=>{
+    if(!window.showDirectoryPicker){ $('searchFilesFallback').click(); return; }
+    try{
+      const handle=await window.showDirectoryPicker({mode:'readwrite'});
+      $('searchSummary').textContent='Scanning the selected folder...';
+      discoveredJsonFiles=(await scanDirectory(handle)).sort((a,b)=>(b.lastModified||0)-(a.lastModified||0) || a.name.localeCompare(b.name));
+      jsonPage=1; applyJsonFilter();
+    }catch(err){ if(err.name!=='AbortError') alert('The selected folder could not be searched.'); }
+  };
+  $('chooseFilesBtn').onclick=()=> $('searchFilesFallback').click();
+  $('searchFilesFallback').onchange=e=>{
+    discoveredJsonFiles=Array.from(e.target.files).filter(f=>isBartekJson(f.name)).map(f=>({name:f.name,file:f,size:f.size,lastModified:f.lastModified})).sort((a,b)=>b.lastModified-a.lastModified || a.name.localeCompare(b.name));
+    jsonPage=1; applyJsonFilter(); e.target.value='';
+  };
+  $('jsonSearchText').oninput=()=>{jsonPage=1; applyJsonFilter();};
+  $('prevPageBtn').onclick=()=>{if(jsonPage>1){jsonPage--;renderJsonResults();}};
+  $('nextPageBtn').onclick=()=>{const pages=Math.ceil(filteredJsonFiles.length/JSON_PAGE_SIZE);if(jsonPage<pages){jsonPage++;renderJsonResults();}};
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('./sw.js').catch(err=>console.log('Service worker registration failed', err));
+    });
+  }
+  render();
+})();
+</script>
+</body>
+</html>
